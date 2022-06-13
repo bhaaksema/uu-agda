@@ -1,4 +1,4 @@
--- Chapter 1
+module cockx.chap1 where
 
 data Nat : Set where
   zero : Nat 
@@ -9,6 +9,7 @@ data Nat : Set where
 _+_ : Nat → Nat → Nat
 0        + y = y
 (succ x) + y = succ (x + y)
+infixr 2 _+_
 
 halve : Nat → Nat
 halve (succ (succ x)) = succ (halve x)
@@ -17,6 +18,7 @@ halve _               = 0
 _*_ : Nat → Nat → Nat
 zero   * y = zero
 succ x * y = y + (x * y)
+infixr 3 _*_
 
 data Bool : Set where
   true  : Bool
@@ -73,6 +75,6 @@ data Maybe (A : Set) : Set where
   nothing : Maybe A
 
 lookup : {A : Set} → List A → Nat → Maybe A
-lookup [] n = nothing
-lookup (x :: xs) zero = just x
-lookup (x :: xs) (succ n) = lookup xs n
+lookup []        _        = nothing
+lookup (x :: _) zero      = just x
+lookup (_ :: xs) (succ n) = lookup xs n
