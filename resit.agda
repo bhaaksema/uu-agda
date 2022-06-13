@@ -1,15 +1,14 @@
 module resit where
 
-open import Data.Nat using (ℕ ; zero) renaming (suc to succ)
-open import Data.Fin using (Fin)
-open import Data.Vec using (Vec)
+open import cockx.chap1
+open import cockx.chap2 hiding (n ; m ; A ; B)
 
 variable
-  n m k : ℕ
+  n m k : Nat
 
-data Expr : ℕ → Set where
+data Expr : Nat → Set where
   -- constants
-  val : ℕ → Expr n
+  val : Nat → Expr n
   -- addition
   add : Expr n → Expr n → Expr n
   -- variables
@@ -17,25 +16,26 @@ data Expr : ℕ → Set where
   -- let bindings: 'bind e₁ e₂' corresponds to 'let x = e₁ in e₂' note
   --  that e₂ has one additional variable in scope (x in the example
   --  above)
-  let-binding : Expr n → Expr (succ n) → Expr n
-  -- (feel free to come up with a better name for this last
-  -- constructor, unfortunately 'let' is a keyword)
+  bind : Expr n → Expr (succ n) → Expr n
 
 -- Define an evaluation function
-eval : Expr n → Vec ℕ n → ℕ
-eval = {!!}
+eval : Expr n → Vec Nat n → Nat
+eval (val x)      _    = x
+eval (add e1 e2)  args = eval e1 args + eval e2 args
+eval (var x)      args = lookupVec args x 
+eval (bind e1 e2) args = eval e2 (eval e1 args :: args)
 
 -- A datatype for representing 'order preserving embedings'
 --   think of OPE n m as a function from Fin n → Fin m
 --   that is order preserving, i.e. if i ≤ j (in Fin n)
 --   than applying the OPE maintains this order.
-data OPE : ℕ → ℕ → Set where
+data OPE : Nat → Nat → Set where
   done : OPE zero zero
   skip : OPE n m → OPE n (succ m)
   keep : OPE n m → OPE (succ n) (succ m)
 
 -- Prove that these order preserving embeddings are reflexive and transitive
-ope-refl : {n : ℕ} → OPE n n
+ope-refl : {n : Nat} → OPE n n
 ope-refl = {!!}
 
 ope-trans : OPE n m → OPE m k → OPE n k
@@ -52,7 +52,7 @@ rename = {!!}
 -- But this can also be used to project information out of a vector
 --  (this is something that you couldn't do easily if we were working
 --  with functions Fin n -> Fin m directly)
-project : OPE n m → Vec ℕ {!!} → Vec ℕ {!!}
+project : OPE n m → Vec Nat {!!} → Vec Nat {!!}
 project ope xs = {!!}
 
 -- Formulate a lemma and prove that renaming preserves semantics
