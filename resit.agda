@@ -1,7 +1,6 @@
 module resit where
 
-open import cockx.chap1
-open import cockx.chap2 hiding (n ; m ; A ; B)
+open import prelude
 
 variable
   n m k : Nat
@@ -21,9 +20,9 @@ data Expr : Nat → Set where
 -- Define an evaluation function
 eval : Expr n → Vec Nat n → Nat
 eval (val x)      _    = x
-eval (add e1 e2)  args = eval e1 args + eval e2 args
+eval (add e₁ e₂)  args = eval e₁ args + eval e₂ args
 eval (var x)      args = lookupVec args x 
-eval (bind e1 e2) args = eval e2 (eval e1 args :: args)
+eval (bind e₁ e₂) args = eval e₂ (eval e₁ args :: args)
 
 -- A datatype for representing 'order preserving embedings'
 --   think of OPE n m as a function from Fin n → Fin m
@@ -36,18 +35,34 @@ data OPE : Nat → Nat → Set where
 
 -- Prove that these order preserving embeddings are reflexive and transitive
 ope-refl : {n : Nat} → OPE n n
-ope-refl = {!!}
+ope-refl {zero}   = done
+ope-refl {succ n} = keep ope-refl
 
 ope-trans : OPE n m → OPE m k → OPE n k
-ope-trans o1 o2 = {!!}
+ope-trans o1        done      = o1
+ope-trans o1        (skip o2) = skip (ope-trans o1 o2)
+ope-trans (skip o1) (keep o2) = skip (ope-trans o1 o2)
+ope-trans (keep o1) (keep o2) = keep (ope-trans o1 o2)
 
 -- Show how each OPE n m determines a map from Fin n → Fin m
 ⟦_⟧ : OPE n m → Fin n → Fin m
-⟦ ope ⟧ i = {!!}
+⟦ done ⟧      ()
+⟦ skip done ⟧ ()
+⟦ skip ope ⟧  i = fsucc (⟦ ope ⟧ i)
+
+⟦ keep done ⟧       fzero = fzero
+⟦ keep (skip ope) ⟧ fzero = fsucc (⟦ keep ope ⟧ fzero)
+⟦ keep (keep ope) ⟧ fzero = fsucc (⟦ keep ope ⟧ fzero)
+
+⟦ keep done ⟧ (fsucc ())
+⟦ keep ope ⟧  (fsucc i) = fsucc (⟦ ope ⟧ i)
 
 -- Use this ⟦_⟧ function to define a renaming operation on expressions
 rename : OPE n m → Expr n → Expr m
-rename = {!!}
+rename ope (val x)      = val x
+rename ope (add e₁ e₂)  = add (rename ope e₁) (rename ope e₂)
+rename ope (var x)      = var (⟦ ope ⟧ x)
+rename ope (bind e₁ e₂) = bind (rename ope e₁) (rename (keep ope) e₂)
 
 -- But this can also be used to project information out of a vector
 --  (this is something that you couldn't do easily if we were working
