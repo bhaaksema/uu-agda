@@ -21,7 +21,7 @@ data Expr : Nat → Set where
 eval : Expr n → Vec Nat n → Nat
 eval (val x)      _    = x
 eval (add e₁ e₂)  args = eval e₁ args + eval e₂ args
-eval (var x)      args = lookupVec args x 
+eval (var x)      args = lookup args x 
 eval (bind e₁ e₂) args = eval e₂ (eval e₁ args :: args)
 
 -- A datatype for representing 'order preserving embedings'
@@ -46,16 +46,9 @@ ope-trans (keep o1) (keep o2) = keep (ope-trans o1 o2)
 
 -- Show how each OPE n m determines a map from Fin n → Fin m
 ⟦_⟧ : OPE n m → Fin n → Fin m
-⟦ done ⟧      ()
-⟦ skip done ⟧ ()
-⟦ skip ope ⟧  i = fsucc (⟦ ope ⟧ i)
-
-⟦ keep done ⟧       fzero = fzero
-⟦ keep (skip ope) ⟧ fzero = fsucc (⟦ keep ope ⟧ fzero)
-⟦ keep (keep ope) ⟧ fzero = fsucc (⟦ keep ope ⟧ fzero)
-
-⟦ keep done ⟧ (fsucc ())
-⟦ keep ope ⟧  (fsucc i) = fsucc (⟦ ope ⟧ i)
+⟦ skip ope ⟧ i = succ (⟦ ope ⟧ i)
+⟦ keep ope ⟧ zero = zero
+⟦ keep ope ⟧ (succ i) = succ (⟦ ope ⟧ i)
 
 -- Use this ⟦_⟧ function to define a renaming operation on expressions
 rename : OPE n m → Expr n → Expr m
@@ -67,8 +60,8 @@ rename ope (bind e₁ e₂) = bind (rename ope e₁) (rename (keep ope) e₂)
 -- But this can also be used to project information out of a vector
 --  (this is something that you couldn't do easily if we were working
 --  with functions Fin n -> Fin m directly)
-project : OPE n m → Vec Nat {!!} → Vec Nat {!!}
-project ope xs = {!!}
+project : OPE n m → Vec Nat m → Vec Nat n
+project ope xs = tabulate (lookup xs ∘ ⟦ ope ⟧)
 
 -- Formulate a lemma and prove that renaming preserves semantics
 -- (i.e. the eval function above)
