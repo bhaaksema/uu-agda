@@ -1,9 +1,6 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module resit where
-
 open import prelude
-
-variable
-  n m k : Nat
 
 data Expr : Nat → Set where
   -- constants
@@ -21,7 +18,7 @@ data Expr : Nat → Set where
 eval : Expr n → Vec Nat n → Nat
 eval (val x)      _    = x
 eval (add e₁ e₂)  args = eval e₁ args + eval e₂ args
-eval (var x)      args = lookup args x 
+eval (var x)      args = lookup args x
 eval (bind e₁ e₂) args = eval e₂ (eval e₁ args :: args)
 
 -- A datatype for representing 'order preserving embedings'
@@ -39,10 +36,10 @@ ope-refl {zero}   = done
 ope-refl {succ n} = keep ope-refl
 
 ope-trans : OPE n m → OPE m k → OPE n k
-ope-trans o1        done      = o1
-ope-trans o1        (skip o2) = skip (ope-trans o1 o2)
-ope-trans (skip o1) (keep o2) = skip (ope-trans o1 o2)
-ope-trans (keep o1) (keep o2) = keep (ope-trans o1 o2)
+ope-trans done g            = g
+ope-trans f        (skip g) = skip (ope-trans f g)
+ope-trans (skip f) (keep g) = skip (ope-trans f g)
+ope-trans (keep f) (keep g) = keep (ope-trans f g)
 
 -- Show how each OPE n m determines a map from Fin n → Fin m
 ⟦_⟧ : OPE n m → Fin n → Fin m
@@ -61,12 +58,24 @@ rename ope (bind e₁ e₂) = bind (rename ope e₁) (rename (keep ope) e₂)
 --  (this is something that you couldn't do easily if we were working
 --  with functions Fin n -> Fin m directly)
 project : OPE n m → Vec Nat m → Vec Nat n
-project ope xs = tabulate (lookup xs ∘ ⟦ ope ⟧)
+project ope xs = tabulate (λ x → lookup xs (⟦ ope ⟧ x))
 
 -- Formulate a lemma and prove that renaming preserves semantics
 -- (i.e. the eval function above)
-correctness : {!!}
-correctness = {!!}
+adjust : OPE n m → Vec Nat n → Vec Nat m
+adjust done [] = []
+adjust (skip ope) xs = zero :: adjust ope xs
+adjust (keep ope) (x :: xs) = x :: adjust ope xs
+
+cong-add : {a b c d : Nat} → a ≡ c → b ≡ d → (a + b) ≡ (c + d)
+cong-add refl refl = refl
+
+correctness : (ope : OPE n m) → (e : Expr n) → (xs : Vec Nat n)
+            → eval e xs ≡ eval (rename ope e) (adjust ope xs)
+correctness ope (val x) xs = refl
+correctness ope (add e₁ e₂) xs = cong-add (correctness ope e₁ xs) (correctness ope e₂ xs)
+correctness ope (var x) xs = {!!}
+correctness ope (bind e₁ e₂) xs = {!!}
 
 -- # Further ideas/projects:
 
@@ -91,3 +100,42 @@ correctness = {!!}
 -- Vec n), evaluating e and e' with this environment returns the same
 -- result.
 
+variable
+  a b : Fin n
+
+-- Ordering on finite sets
+data _≤_ : Fin n → Fin n → Set where
+  base : zero ≤ b
+  step : a ≤ b → succ a ≤ succ b
+infixr 4 _≤_
+
+_≤?_ : Fin n → Fin n → Bool
+zero ≤? y = true
+succ x ≤? zero = false
+succ x ≤? succ y = x ≤? y
+
+soundness-≤ : {a ≤? b ≡ true} → a ≤ b
+soundness-≤ {a = zero} = base
+soundness-≤ {a = succ a} {b = succ b} {p} = step (soundness-≤ {a = a} {b = b} {p})
+
+-- Soundness proof: each OPE is order preserving
+soundness-ope : (ope : OPE n m) → a ≤ b → ⟦ ope ⟧ a ≤ ⟦ ope ⟧ b
+soundness-ope ope p = {!   !}
+
+-- Completeness proof:
+-- each order preserving function (Fin n → Fin m) gives rise to a unique OPE n m
+completeness : {f : Fin n → Fin m} → {a ≤ b} → {f a ≤ f b} → OPE n m
+completeness = {!   !}
+
+-- Identity proof: ope-refl corresponds to identity
+identity : ⟦ ope-refl ⟧ a ≡ a
+identity {a = zero} = refl
+identity {a = succ a} = cong succ identity
+
+-- Composition proof: ope-trans corresponds to function composition
+composition : (f : OPE n m) → (g : OPE m k) → ⟦ ope-trans f g ⟧ a ≡ ⟦ g ⟧ (⟦ f ⟧ a)
+composition (skip f) (skip g) = cong succ (composition (skip f) g)
+composition (skip f) (keep g) = cong succ (composition f g)
+composition (keep f) (skip g) = cong succ (composition (keep f) g)
+composition {a = zero} (keep _) (keep _) = refl
+composition {a = succ _} (keep f) (keep g) = cong succ (composition f g)
