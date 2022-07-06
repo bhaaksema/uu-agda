@@ -42,6 +42,11 @@ tabulate : (Fin n → A) → Vec A n
 tabulate {n = zero}  f = []
 tabulate {n = succ n} f = f zero :: tabulate (λ x → f (succ x))
 
+-- Pairs
+data _×_ (A B : Set) : Set where
+  _,_ : A → B → A × B
+infixr 4 _,_
+
 -- Proofs
 data _≡_ : A → A → Set where
   refl : {x : A} → x ≡ x

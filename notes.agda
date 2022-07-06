@@ -70,9 +70,6 @@ bin-cong : {A B C : Set}{a c : A}{b d : B}
          → (f : A → B → C) → a ≡ c → b ≡ d → f a b ≡ f c d
 bin-cong _ refl refl = refl
 
-cong-adjust : {x y : Vec Nat n} → (ope : OPE n m) → x ≡ y → adjust ope x ≡ adjust ope y
-cong-adjust ope p = cong (adjust ope) p
-
 cong-lookup : {x y : Fin n}{xs ys : Vec A n} → x ≡ y → xs ≡ ys → lookup xs x ≡ lookup ys y
 cong-lookup p1 p2 = bin-cong lookup p2 p1
 

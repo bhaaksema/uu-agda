@@ -17,9 +17,9 @@ data Expr : Nat → Set where
 -- Define an evaluation function
 eval : Expr n → Vec Nat n → Nat
 eval (val x)      _    = x
-eval (add e₁ e₂)  args = eval e₁ args + eval e₂ args
-eval (var x)      args = lookup args x
-eval (bind e₁ e₂) args = eval e₂ (eval e₁ args :: args)
+eval (add e₁ e₂)  env = eval e₁ env + eval e₂ env
+eval (var x)      env = lookup env x
+eval (bind e₁ e₂) env = eval e₂ (eval e₁ env :: env)
 
 -- A datatype for representing 'order preserving embedings'
 --   think of OPE n m as a function from Fin n → Fin m
@@ -62,16 +62,11 @@ project ope xs = tabulate (λ x → lookup xs (⟦ ope ⟧ x))
 
 -- Formulate a lemma and prove that renaming preserves semantics
 -- (i.e. the eval function above)
-adjust : OPE n m → Vec Nat n → Vec Nat m
-adjust done [] = []
-adjust (skip ope) xs = zero :: adjust ope xs
-adjust (keep ope) (x :: xs) = x :: adjust ope xs
-
 cong-add : {a b c d : Nat} → a ≡ c → b ≡ d → (a + b) ≡ (c + d)
 cong-add refl refl = refl
 
-correctness : (ope : OPE n m) → (e : Expr n) → (xs : Vec Nat n)
-            → eval e xs ≡ eval (rename ope e) (adjust ope xs)
+correctness : (ope : OPE n m) → (e : Expr n) → (env : Vec Nat m)
+            → eval e (project ope env) ≡ eval (rename ope e) env
 correctness ope (val x) xs = refl
 correctness ope (add e₁ e₂) xs = cong-add (correctness ope e₁ xs) (correctness ope e₂ xs)
 correctness ope (var x) xs = {!!}
@@ -87,19 +82,6 @@ correctness ope (bind e₁ e₂) xs = {!!}
 
 -- * formulate an ordering on Fin n and show that each OPE preserves
 -- this ordering (a soundness result)
-
--- * show that each function Fin n → Fin m that is order preserving
--- gives rise to a unique OPE n m (a completeness result)
-
--- * prove that ope-refl and ope-trans behave 'as expected' with
--- respect to their semantics ⟦_⟧ (i.e. they correspond to the
--- identity function and function composition)
-
--- * write a 'dead binding analysis' that maps each (e : Expr n) to a
--- pair (e' : Expr m) and (ope : OPE m n) such that: for any (env :
--- Vec n), evaluating e and e' with this environment returns the same
--- result.
-
 variable
   a b : Fin n
 
@@ -118,24 +100,31 @@ soundness-≤ : {a ≤? b ≡ true} → a ≤ b
 soundness-≤ {a = zero} = base
 soundness-≤ {a = succ a} {b = succ b} {p} = step (soundness-≤ {a = a} {b = b} {p})
 
--- Soundness proof: each OPE is order preserving
 soundness-ope : (ope : OPE n m) → a ≤ b → ⟦ ope ⟧ a ≤ ⟦ ope ⟧ b
-soundness-ope ope p = {!   !}
+soundness-ope ope p = {!!}
 
--- Completeness proof:
--- each order preserving function (Fin n → Fin m) gives rise to a unique OPE n m
+-- * show that each function Fin n → Fin m that is order preserving
+-- gives rise to a unique OPE n m (a completeness result)
 completeness : {f : Fin n → Fin m} → {a ≤ b} → {f a ≤ f b} → OPE n m
-completeness = {!   !}
+completeness = {!!}
 
--- Identity proof: ope-refl corresponds to identity
+-- * prove that ope-refl and ope-trans behave 'as expected' with
+-- respect to their semantics ⟦_⟧ (i.e. they correspond to the
+-- identity function and function composition)
 identity : ⟦ ope-refl ⟧ a ≡ a
 identity {a = zero} = refl
 identity {a = succ a} = cong succ identity
 
--- Composition proof: ope-trans corresponds to function composition
 composition : (f : OPE n m) → (g : OPE m k) → ⟦ ope-trans f g ⟧ a ≡ ⟦ g ⟧ (⟦ f ⟧ a)
 composition (skip f) (skip g) = cong succ (composition (skip f) g)
 composition (skip f) (keep g) = cong succ (composition f g)
 composition (keep f) (skip g) = cong succ (composition (keep f) g)
 composition {a = zero} (keep _) (keep _) = refl
 composition {a = succ _} (keep f) (keep g) = cong succ (composition f g)
+
+-- * write a 'dead binding analysis' that maps each (e : Expr n) to a
+-- pair (e' : Expr m) and (ope : OPE m n) such that: for any (env :
+-- Vec n), evaluating e and e' with this environment returns the same
+-- result.
+dba : Expr n → Expr m × OPE m n
+dba e = {!!}
