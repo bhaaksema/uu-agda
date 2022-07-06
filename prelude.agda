@@ -1,13 +1,13 @@
 module prelude where
 
 -- Natural numbers
-data Nat : Set where
-  zero : Nat
-  succ : Nat -> Nat
+data ℕ : Set where
+  zero : ℕ
+  succ : ℕ -> ℕ
 
-{-# BUILTIN NATURAL Nat #-}
+{-# BUILTIN NATURAL ℕ #-}
 
-_+_ : Nat → Nat → Nat
+_+_ : ℕ → ℕ → ℕ
 0      + y = y
 succ x + y = succ (x + y)
 infixr 2 _+_
@@ -19,9 +19,9 @@ data Bool : Set where
 
 -- Finite sets
 variable
-  n m k : Nat
+  n m k : ℕ
 
-data Fin : Nat → Set where
+data Fin : ℕ → Set where
   zero : Fin (succ n)
   succ : Fin n → Fin (succ n)
 
@@ -29,18 +29,18 @@ data Fin : Nat → Set where
 variable
   A B : Set
 
-data Vec A : Nat → Set where
+data Vec A : ℕ → Set where
   []   : Vec A 0
-  _::_ : {n : Nat} → A → Vec A n → Vec A (succ n)
-infixr 3 _::_
+  _∷_ : {n : ℕ} → A → Vec A n → Vec A (succ n)
+infixr 3 _∷_
 
 lookup : Vec A n → Fin n → A
-lookup (x :: xs) zero    = x
-lookup (x :: xs) (succ i) = lookup xs i
+lookup (x ∷ xs) zero    = x
+lookup (x ∷ xs) (succ i) = lookup xs i
 
 tabulate : (Fin n → A) → Vec A n
 tabulate {n = zero}  f = []
-tabulate {n = succ n} f = f zero :: tabulate (λ x → f (succ x))
+tabulate {n = succ n} f = f zero ∷ tabulate (λ x → f (succ x))
 
 -- Pairs
 data _×_ (A B : Set) : Set where

@@ -2,9 +2,9 @@
 module resit where
 open import prelude
 
-data Expr : Nat → Set where
+data Expr : ℕ → Set where
   -- constants
-  val : Nat → Expr n
+  val : ℕ → Expr n
   -- addition
   add : Expr n → Expr n → Expr n
   -- variables
@@ -15,23 +15,23 @@ data Expr : Nat → Set where
   bind : Expr n → Expr (succ n) → Expr n
 
 -- Define an evaluation function
-eval : Expr n → Vec Nat n → Nat
-eval (val x)      _    = x
+eval : Expr n → Vec ℕ n → ℕ
+eval (val x)      _   = x
 eval (add e₁ e₂)  env = eval e₁ env + eval e₂ env
 eval (var x)      env = lookup env x
-eval (bind e₁ e₂) env = eval e₂ (eval e₁ env :: env)
+eval (bind e₁ e₂) env = eval e₂ (eval e₁ env ∷ env)
 
 -- A datatype for representing 'order preserving embedings'
 --   think of OPE n m as a function from Fin n → Fin m
 --   that is order preserving, i.e. if i ≤ j (in Fin n)
 --   than applying the OPE maintains this order.
-data OPE : Nat → Nat → Set where
+data OPE : ℕ → ℕ → Set where
   done : OPE zero zero
   skip : OPE n m → OPE n (succ m)
   keep : OPE n m → OPE (succ n) (succ m)
 
 -- Prove that these order preserving embeddings are reflexive and transitive
-ope-refl : {n : Nat} → OPE n n
+ope-refl : {n : ℕ} → OPE n n
 ope-refl {zero}   = done
 ope-refl {succ n} = keep ope-refl
 
@@ -57,15 +57,15 @@ rename ope (bind e₁ e₂) = bind (rename ope e₁) (rename (keep ope) e₂)
 -- But this can also be used to project information out of a vector
 --  (this is something that you couldn't do easily if we were working
 --  with functions Fin n -> Fin m directly)
-project : OPE n m → Vec Nat m → Vec Nat n
+project : OPE n m → Vec ℕ m → Vec ℕ n
 project ope xs = tabulate (λ x → lookup xs (⟦ ope ⟧ x))
 
 -- Formulate a lemma and prove that renaming preserves semantics
 -- (i.e. the eval function above)
-cong-add : {a b c d : Nat} → a ≡ c → b ≡ d → (a + b) ≡ (c + d)
+cong-add : {a b c d : ℕ} → a ≡ c → b ≡ d → (a + b) ≡ (c + d)
 cong-add refl refl = refl
 
-correctness : (ope : OPE n m) → (e : Expr n) → (env : Vec Nat m)
+correctness : (ope : OPE n m) → (e : Expr n) → (env : Vec ℕ m)
             → eval e (project ope env) ≡ eval (rename ope e) env
 correctness ope (val x) xs = refl
 correctness ope (add e₁ e₂) xs = cong-add (correctness ope e₁ xs) (correctness ope e₂ xs)

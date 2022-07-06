@@ -15,7 +15,7 @@ id : Set → Set
 id x = x
 
 -- Natural numbers
-_*_ : Nat → Nat → Nat
+_*_ : ℕ → ℕ → ℕ
 zero   * y = zero
 succ x * y = y + (x * y)
 infixr 3 _*_
@@ -25,15 +25,15 @@ if_then_else_ : Bool → A  → A → A
 if true then t else _ = t
 if false then _ else e = e
 
-_==_ : Nat → Nat → Bool
+_==_ : ℕ → ℕ → Bool
 zero == zero = true
 succ x == succ y = x == y
 _ == _ = false
 
 -- Finite sets
-fromNat : (n : Nat) → Fin (succ n)
-fromNat zero     = zero
-fromNat (succ n) = succ (fromNat n)
+fromℕ : (n : ℕ) → Fin (succ n)
+fromℕ zero     = zero
+fromℕ (succ n) = succ (fromℕ n)
 
 _==?_ : Fin n → Fin n → Bool
 zero   ==? zero   = true
@@ -45,14 +45,14 @@ data Σ (A : Set) (B : A → Set) : Set where
   _,_ : (x : A) → B x → Σ A B
 
 -- Vectors
-_++_ : {A : Set}{n m : Nat} → Vec A m → Vec A n → Vec A (m + n)
+_++_ : {A : Set}{n m : ℕ} → Vec A m → Vec A n → Vec A (m + n)
 []       ++ ys = ys
-(x :: xs) ++ ys = x :: (xs ++ ys)
+(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
 infixr 3 _++_
 
-zeroes : (n : Nat) → Vec Nat n
+zeroes : (n : ℕ) → Vec ℕ n
 zeroes zero = []
-zeroes (succ n) = zero :: zeroes n
+zeroes (succ n) = zero ∷ zeroes n
 
 -- Proofs
 record ⊤ : Set where
@@ -73,7 +73,7 @@ bin-cong _ refl refl = refl
 cong-lookup : {x y : Fin n}{xs ys : Vec A n} → x ≡ y → xs ≡ ys → lookup xs x ≡ lookup ys y
 cong-lookup p1 p2 = bin-cong lookup p2 p1
 
-first : {x : A}{xs : Vec A n} → lookup (x :: xs) zero ≡ x
+first : {x : A}{xs : Vec A n} → lookup (x ∷ xs) zero ≡ x
 first = refl
 
 cong-rename : {x y : Expr n}{ope : OPE n m} → x ≡ y → rename ope x ≡ rename ope y
