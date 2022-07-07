@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module resit where
 open import prelude
 
@@ -65,15 +64,31 @@ project ope xs = tabulate (λ x → lookup xs (⟦ ope ⟧ x))
 
 -- Formulate a lemma and prove that renaming preserves semantics
 -- (i.e. the eval function above)
-cong-add : {a b c d : ℕ} → a ≡ c → b ≡ d → (a + b) ≡ (c + d)
-cong-add refl refl = refl
-
-correctness : (ope : OPE n m) → (e : Expr n) → (env : Vec ℕ m)
-            → eval e (project ope env) ≡ eval (rename ope e) env
-correctness ope (val x) xs = refl
-correctness ope (add e₁ e₂) xs = cong-add (correctness ope e₁ xs) (correctness ope e₂ xs)
-correctness ope (var x) xs = {!!}
-correctness ope (bind e₁ e₂) xs = {!!}
+correct : (ope : OPE n m) → (e : Expr n) → (env : Vec ℕ m)
+        → eval e (project ope env) ≡ eval (rename ope e) env
+correct _   (val _)        _  = refl
+correct ope (bin op e₁ e₂) xs = cong₂ op (correct ope e₁ xs) (correct ope e₂ xs)
+correct ope (var y)        xs = helper ope y xs
+  where
+    helper : (ope : OPE n m) → (y : Fin n) → (xs : Vec ℕ m)
+           → lookup (project ope xs) y ≡ lookup xs (⟦ ope ⟧ y)
+    helper _          zero      _       = refl
+    helper (skip ope) (succ y) (x ∷ xs) = helper ope (succ y) xs
+    helper (keep ope) (succ y) (x ∷ xs) = helper ope y xs
+correct ope (bind e₁ e₂) xs =
+  let
+    ih₁ = correct ope e₁ xs
+    ih₂ = correct (keep ope) e₂ (x ∷ xs)
+  in
+    eval e₂ (eval e₁ (project ope xs) ∷ project ope xs)
+      ⟨ cong₂ {x₁ = e₂} eval refl (cong₂ _∷_ ih₁ refl) ⟩
+    eval e₂ (x ∷ project ope xs)
+      ⟨ cong₂ {x₁ = e₂} eval refl refl ⟩
+    eval e₂ (project (keep ope) (x ∷ xs))
+      ⟨ ih₂ ⟩
+    eval (rename (keep ope) e₂) (x ∷ xs) ■
+  where
+    x = eval (rename ope e₁) xs
 
 -- # Further ideas/projects:
 
