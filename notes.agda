@@ -12,7 +12,7 @@ id : Set → Set
 id x = x
 
 -- Booleans
-if_then_else_ : Bool → A  → A → A
+if_then_else_ : {A : Set} → Bool → A  → A → A
 if true then t else _ = t
 if false then _ else e = e
 
@@ -26,7 +26,7 @@ fromℕ : (n : ℕ) → Fin (succ n)
 fromℕ zero     = zero
 fromℕ (succ n) = succ (fromℕ n)
 
-_==?_ : Fin n → Fin n → Bool
+_==?_ : {n : ℕ} → Fin n → Fin n → Bool
 zero   ==? zero   = true
 succ x ==? succ y = x ==? y
 _      ==? _      = false

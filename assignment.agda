@@ -1,4 +1,4 @@
-module resit where
+module assignment where
 open import prelude
 
 variable
