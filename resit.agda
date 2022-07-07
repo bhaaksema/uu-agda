@@ -4,6 +4,7 @@ open import prelude
 variable
   n m k : ℕ
 
+-- Addition has been replaced by binary operator (ℕ → ℕ → ℕ)
 data Expr : ℕ → Set where
   -- constants
   val : ℕ → Expr n
@@ -16,6 +17,7 @@ data Expr : ℕ → Set where
   --  above)
   bind : Expr n → Expr (succ n) → Expr n
 
+{-          BASIC ASSIGNMENT 1          -}
 -- Define an evaluation function
 eval : Expr n → Vec ℕ n → ℕ
 eval (val x)        _   = x
@@ -32,6 +34,7 @@ data OPE : ℕ → ℕ → Set where
   skip : OPE n m → OPE n (succ m)
   keep : OPE n m → OPE (succ n) (succ m)
 
+{-          BASIC ASSIGNMENT 2          -}
 -- Prove that these order preserving embeddings are reflexive and transitive
 ope-refl : {n : ℕ} → OPE n n
 ope-refl {zero}   = done
@@ -43,12 +46,14 @@ ope-trans f        (skip g) = skip (ope-trans f g)
 ope-trans (skip f) (keep g) = skip (ope-trans f g)
 ope-trans (keep f) (keep g) = keep (ope-trans f g)
 
+{-          BASIC ASSIGNMENT 3          -}
 -- Show how each OPE n m determines a map from Fin n → Fin m
 ⟦_⟧ : OPE n m → Fin n → Fin m
-⟦ skip ope ⟧ i = succ (⟦ ope ⟧ i)
-⟦ keep ope ⟧ zero = zero
+⟦ skip ope ⟧ i        = succ (⟦ ope ⟧ i)
+⟦ keep ope ⟧ zero     = zero
 ⟦ keep ope ⟧ (succ i) = succ (⟦ ope ⟧ i)
 
+{-          BASIC ASSIGNMENT 4          -}
 -- Use this ⟦_⟧ function to define a renaming operation on expressions
 rename : OPE n m → Expr n → Expr m
 rename ope (val x)        = val x
@@ -56,26 +61,28 @@ rename ope (bin op e₁ e₂) = bin op (rename ope e₁) (rename ope e₂)
 rename ope (var x)        = var (⟦ ope ⟧ x)
 rename ope (bind e₁ e₂)   = bind (rename ope e₁) (rename (keep ope) e₂)
 
+{-          BASIC ASSIGNMENT 5          -}
 -- But this can also be used to project information out of a vector
 --  (this is something that you couldn't do easily if we were working
 --  with functions Fin n -> Fin m directly)
 project : OPE n m → Vec ℕ m → Vec ℕ n
 project ope xs = tabulate (λ x → lookup xs (⟦ ope ⟧ x))
 
+{-          BASIC ASSIGNMENT 6          -}
 -- Formulate a lemma and prove that renaming preserves semantics
 -- (i.e. the eval function above)
+helper : (ope : OPE n m) → (y : Fin n) → (xs : Vec ℕ m)
+       → lookup (project ope xs) y ≡ lookup xs (⟦ ope ⟧ y)
+helper _          zero      _       = refl
+helper (skip ope) (succ y) (x ∷ xs) = helper ope (succ y) xs
+helper (keep ope) (succ y) (x ∷ xs) = helper ope y xs
+
 correct : (ope : OPE n m) → (e : Expr n) → (env : Vec ℕ m)
         → eval e (project ope env) ≡ eval (rename ope e) env
 correct _   (val _)        _  = refl
 correct ope (bin op e₁ e₂) xs = cong₂ op (correct ope e₁ xs) (correct ope e₂ xs)
 correct ope (var y)        xs = helper ope y xs
-  where
-    helper : (ope : OPE n m) → (y : Fin n) → (xs : Vec ℕ m)
-           → lookup (project ope xs) y ≡ lookup xs (⟦ ope ⟧ y)
-    helper _          zero      _       = refl
-    helper (skip ope) (succ y) (x ∷ xs) = helper ope (succ y) xs
-    helper (keep ope) (succ y) (x ∷ xs) = helper ope y xs
-correct ope (bind e₁ e₂) xs =
+correct ope (bind e₁ e₂)   xs =
   let
     ih₁ = correct ope e₁ xs
     ih₂ = correct (keep ope) e₂ (x ∷ xs)
@@ -98,14 +105,14 @@ variable
   a b : Fin n
 
 identity : ⟦ ope-refl ⟧ a ≡ a
-identity {a = zero} = refl
+identity {a = zero}   = refl
 identity {a = succ a} = cong succ identity
 
 compose : (f : OPE n m) → (g : OPE m k) → ⟦ ope-trans f g ⟧ a ≡ ⟦ g ⟧ (⟦ f ⟧ a)
 compose (skip f) (skip g) = cong succ (compose (skip f) g)
 compose (skip f) (keep g) = cong succ (compose f g)
 compose (keep f) (skip g) = cong succ (compose (keep f) g)
-compose {a = zero} (keep _) (keep _) = refl
+compose {a = zero}   (keep _) (keep _) = refl
 compose {a = succ _} (keep f) (keep g) = cong succ (compose f g)
 
 {-          BONUS ASSIGNMENT 2          -}
@@ -115,8 +122,8 @@ data _≤_ : Fin n → Fin n → Set where
   step : a ≤ b → succ a ≤ succ b
 
 _≤?_ : Fin n → Fin n → Bool
-zero ≤? y = true
-succ x ≤? zero = false
+zero   ≤? y      = true
+succ x ≤? zero   = false
 succ x ≤? succ y = x ≤? y
 
 sound-≤ : {a ≤? b ≡ true} → a ≤ b

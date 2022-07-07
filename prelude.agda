@@ -1,6 +1,6 @@
 module prelude where
 
--- Natural numbers
+{-           NATURAL NUMBERS            -}
 data ℕ : Set where
   zero : ℕ
   succ : ℕ -> ℕ
@@ -23,24 +23,24 @@ zero   * y = zero
 succ x * y = y + (x * y)
 infixr 4 _*_
 
--- Booleans
+{-               BOOLEANS               -}
 data Bool : Set where
   true  : Bool
   false : Bool
 
--- Finite sets
+{-             FINITE SETS              -}
 data Fin : ℕ → Set where
   zero : {n : ℕ} → Fin (succ n)
   succ : {n : ℕ} → Fin n → Fin (succ n)
 
--- Pairs
+{-                PAIRS                 -}
 data _×_ (A B : Set) : Set where
   _,_ : A → B → A × B
 
 data Σ (A : Set) (B : A → Set) : Set where
   _,_ : (x : A) → B x → Σ A B
 
--- Vectors
+{-               VECTORS                -}
 data Vec (A : Set) : ℕ → Set where
   []   : Vec A 0
   _∷_ : {n : ℕ} → A → Vec A n → Vec A (succ n)
@@ -54,7 +54,7 @@ tabulate : {A : Set}{n : ℕ} → (Fin n → A) → Vec A n
 tabulate {n = zero}  f = []
 tabulate {n = succ n} f = f zero ∷ tabulate (λ x → f (succ x))
 
--- Proof constructs
+{-           PROOF CONSTRUCTS           -}
 data _≡_ {A : Set} : A → A → Set where
   refl : {x : A} → x ≡ x
 infix 1 _≡_
