@@ -2,11 +2,14 @@
 module resit where
 open import prelude
 
+variable
+  n m k : ℕ
+
 data Expr : ℕ → Set where
   -- constants
   val : ℕ → Expr n
-  -- addition
-  add : Expr n → Expr n → Expr n
+  -- binary operator
+  bin : (ℕ → ℕ → ℕ) → Expr n → Expr n → Expr n
   -- variables
   var : Fin n → Expr n
   -- let bindings: 'bind e₁ e₂' corresponds to 'let x = e₁ in e₂' note
@@ -16,10 +19,10 @@ data Expr : ℕ → Set where
 
 -- Define an evaluation function
 eval : Expr n → Vec ℕ n → ℕ
-eval (val x)      _   = x
-eval (add e₁ e₂)  env = eval e₁ env + eval e₂ env
-eval (var x)      env = lookup env x
-eval (bind e₁ e₂) env = eval e₂ (eval e₁ env ∷ env)
+eval (val x)        _   = x
+eval (bin op e₁ e₂) env = op (eval e₁ env) (eval e₂ env)
+eval (var x)        env = lookup env x
+eval (bind e₁ e₂)   env = eval e₂ (eval e₁ env ∷ env)
 
 -- A datatype for representing 'order preserving embedings'
 --   think of OPE n m as a function from Fin n → Fin m
@@ -49,10 +52,10 @@ ope-trans (keep f) (keep g) = keep (ope-trans f g)
 
 -- Use this ⟦_⟧ function to define a renaming operation on expressions
 rename : OPE n m → Expr n → Expr m
-rename ope (val x)      = val x
-rename ope (add e₁ e₂)  = add (rename ope e₁) (rename ope e₂)
-rename ope (var x)      = var (⟦ ope ⟧ x)
-rename ope (bind e₁ e₂) = bind (rename ope e₁) (rename (keep ope) e₂)
+rename ope (val x)        = val x
+rename ope (bin op e₁ e₂) = bin op (rename ope e₁) (rename ope e₂)
+rename ope (var x)        = var (⟦ ope ⟧ x)
+rename ope (bind e₁ e₂)   = bind (rename ope e₁) (rename (keep ope) e₂)
 
 -- But this can also be used to project information out of a vector
 --  (this is something that you couldn't do easily if we were working
