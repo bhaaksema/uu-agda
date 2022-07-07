@@ -90,6 +90,52 @@ correct ope (bind e₁ e₂) xs =
   where
     x = eval (rename ope e₁) xs
 
+{-          BONUS ASSIGNMENT 1          -}
+-- * prove that ope-refl and ope-trans behave 'as expected' with
+-- respect to their semantics ⟦_⟧ (i.e. they correspond to the
+-- identity function and function composition)
+variable
+  a b : Fin n
+
+identity : ⟦ ope-refl ⟧ a ≡ a
+identity {a = zero} = refl
+identity {a = succ a} = cong succ identity
+
+compose : (f : OPE n m) → (g : OPE m k) → ⟦ ope-trans f g ⟧ a ≡ ⟦ g ⟧ (⟦ f ⟧ a)
+compose (skip f) (skip g) = cong succ (compose (skip f) g)
+compose (skip f) (keep g) = cong succ (compose f g)
+compose (keep f) (skip g) = cong succ (compose (keep f) g)
+compose {a = zero} (keep _) (keep _) = refl
+compose {a = succ _} (keep f) (keep g) = cong succ (compose f g)
+
+{-          BONUS ASSIGNMENT 2          -}
+-- * formulate an ordering on Fin n
+data _≤_ : Fin n → Fin n → Set where
+  base : zero ≤ b
+  step : a ≤ b → succ a ≤ succ b
+
+_≤?_ : Fin n → Fin n → Bool
+zero ≤? y = true
+succ x ≤? zero = false
+succ x ≤? succ y = x ≤? y
+
+sound-≤ : {a ≤? b ≡ true} → a ≤ b
+sound-≤ {a = zero} = base
+sound-≤ {a = succ a} {b = succ b} {p} = step (sound-≤ {a = a} {b = b} {p})
+
+-- * show that each OPE preserves ≤ (a soundness result)
+sound-ope : (ope : OPE n m) → a ≤ b → ⟦ ope ⟧ a ≤ ⟦ ope ⟧ b
+sound-ope (skip ope) base     = step (sound-ope ope base)
+sound-ope (skip ope) (step p) = step (sound-ope ope (step p))
+sound-ope (keep ope) base     = base
+sound-ope (keep ope) (step p) = step (sound-ope ope p)
+
+{-          BONUS ASSIGNMENT 3          -}
+-- * show that each function Fin n → Fin m that is order preserving
+-- gives rise to a unique OPE n m (a completeness result)
+complete : (f : Fin n → Fin m) → a ≤ b → f a ≤ f b → OPE n m
+complete f p q = {! q  !}
+
 -- # Further ideas/projects:
 
 -- * extend the Expr language with boolean constants, if then else,
@@ -98,51 +144,7 @@ correct ope (bind e₁ e₂) xs =
 -- you will need to keep track of the list of types of variables in
 -- scope. How can you update the OPE accordingly?
 
--- * formulate an ordering on Fin n and show that each OPE preserves
--- this ordering (a soundness result)
-variable
-  a b : Fin n
-
--- Ordering on finite sets
-data _≤_ : Fin n → Fin n → Set where
-  base : zero ≤ b
-  step : a ≤ b → succ a ≤ succ b
-infixr 4 _≤_
-
-_≤?_ : Fin n → Fin n → Bool
-zero ≤? y = true
-succ x ≤? zero = false
-succ x ≤? succ y = x ≤? y
-
-soundness-≤ : {a ≤? b ≡ true} → a ≤ b
-soundness-≤ {a = zero} = base
-soundness-≤ {a = succ a} {b = succ b} {p} = step (soundness-≤ {a = a} {b = b} {p})
-
-soundness-ope : (ope : OPE n m) → a ≤ b → ⟦ ope ⟧ a ≤ ⟦ ope ⟧ b
-soundness-ope ope p = {!!}
-
--- * show that each function Fin n → Fin m that is order preserving
--- gives rise to a unique OPE n m (a completeness result)
-completeness : {f : Fin n → Fin m} → {a ≤ b} → {f a ≤ f b} → OPE n m
-completeness = {!!}
-
--- * prove that ope-refl and ope-trans behave 'as expected' with
--- respect to their semantics ⟦_⟧ (i.e. they correspond to the
--- identity function and function composition)
-identity : ⟦ ope-refl ⟧ a ≡ a
-identity {a = zero} = refl
-identity {a = succ a} = cong succ identity
-
-composition : (f : OPE n m) → (g : OPE m k) → ⟦ ope-trans f g ⟧ a ≡ ⟦ g ⟧ (⟦ f ⟧ a)
-composition (skip f) (skip g) = cong succ (composition (skip f) g)
-composition (skip f) (keep g) = cong succ (composition f g)
-composition (keep f) (skip g) = cong succ (composition (keep f) g)
-composition {a = zero} (keep _) (keep _) = refl
-composition {a = succ _} (keep f) (keep g) = cong succ (composition f g)
-
 -- * write a 'dead binding analysis' that maps each (e : Expr n) to a
 -- pair (e' : Expr m) and (ope : OPE m n) such that: for any (env :
 -- Vec n), evaluating e and e' with this environment returns the same
 -- result.
-dba : Expr n → Expr m × OPE m n
-dba e = {!!}
